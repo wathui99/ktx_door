@@ -1,0 +1,12 @@
+.\objects\user_gpio.o: src\User_GPIO.c
+.\objects\user_gpio.o: .\inc\User_GPIO.h
+.\objects\user_gpio.o: .\inc\stm32f10x.h
+.\objects\user_gpio.o: .\inc\core_cm3.h
+.\objects\user_gpio.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\user_gpio.o: .\inc\system_stm32f10x.h
+.\objects\user_gpio.o: .\inc\stm32f10x_conf.h
+.\objects\user_gpio.o: .\inc\stm32f10x_gpio.h
+.\objects\user_gpio.o: .\inc\stm32f10x.h
+.\objects\user_gpio.o: .\inc\stm32f10x_rcc.h
+.\objects\user_gpio.o: .\inc\stm32f10x_usart.h
+.\objects\user_gpio.o: .\inc\misc.h

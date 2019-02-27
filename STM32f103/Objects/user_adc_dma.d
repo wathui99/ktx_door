@@ -1,0 +1,14 @@
+.\objects\user_adc_dma.o: src\User_ADC_DMA.c
+.\objects\user_adc_dma.o: .\inc\User_ADC_DMA.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x.h
+.\objects\user_adc_dma.o: .\inc\core_cm3.h
+.\objects\user_adc_dma.o: D:\ProgramInstallation\Keilcv5\Core\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\user_adc_dma.o: .\inc\system_stm32f10x.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x_conf.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x_gpio.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x_rcc.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x_usart.h
+.\objects\user_adc_dma.o: .\inc\misc.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x_adc.h
+.\objects\user_adc_dma.o: .\inc\stm32f10x_dma.h
