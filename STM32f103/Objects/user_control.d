@@ -13,8 +13,6 @@
 .\objects\user_control.o: .\inc\misc.h
 .\objects\user_control.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\user_control.o: .\inc\delay.h
-.\objects\user_control.o: .\inc\User_TIM.h
-.\objects\user_control.o: .\inc\stm32f10x_tim.h
 .\objects\user_control.o: .\inc\tm_stm32f10x_mfrc522.h
 .\objects\user_control.o: .\inc\stm32f10x_spi.h
 .\objects\user_control.o: .\inc\User_FLASH.h

@@ -12,54 +12,80 @@ int main (void) {
 	/*--------------------------------*/
 	DelayInit();
 	TM_MFRC522_Init();
-	User_TIM_Init();
 	User_USART2_Init(9600);
 	User_GPIO_Init();
+	
 	Turn_buzz(OFF);
 	Turn_led_close(OFF);
 	Turn_led_open(OFF);
+	
+	
+	Turn_lock(CLOSE);
+	Door_status=CLOSE;
+	Turn_led_close(ON);
+	
+	User_USART2_SendSchar("restart!\n");
+	
 	Updata_Data_From_PAGE0();
-	uint8_t i=0;
-	for (i=0; i<10; i++) {
-		if(CheckDoorStatus()==CLOSE) {
-			User_TIM_Handle(SERVO_ANGLE_CLOSE);
-			Door_status=CLOSE;
-			Turn_led_close(ON);
-			break;
-		}
-		DelayMs(200);
-	}
-//	else {
-//		if(Emer_flag==FALSE) {
-//			User_TIM_Handle(SERVO_ANGLE_OPEN);
-//			Turn_led_open(ON);
-//			Door_status=OPEN;
-//		}
-//	}
+
 	/*---------------------loop while---------------------*/
 	while (1) {
 		//---------------------ALERT-----------------------
-//		if(CheckAlert()) {//if alert occure
-//			Alert();
-//		}
-		//else {
+		if(CheckAlert()) {//if alert occure
+			while(Emer_flag) {
+				IWDG_ReloadCounter(); //reset lai thoi gian.
+				TM_MFRC522_Init();
+				User_USART2_SendSchar("\nBAO DONG!\n");
+					
+				if (TM_MFRC522_Check(ScanedID) == MI_OK){
+					if(CheckScanedID(ScanedID)){
+						Turn_buzz(OFF);
+						Enter_pass_remove_alert=FALSE;
+						Emer_flag=FALSE;
+						Write_Page0(Emer_flag,Nbr_ID,OneTouch,password);
+						User_USART2_SendSchar("\nDa tat bao dong!\n");
+						
+						break;
+					}
+				}
+				Turn_buzz(ON);
+				DelayMs(500);
+				Turn_buzz(OFF);
+				DelayMs(500);
+				
+				if(!Read_status(GPIO_BT,BT2_Pin) && OneTouch)
+					Enter_pass_remove_alert=TRUE;
+				if(Enter_pass_remove_alert) {
+					if(RequirePassword()) {
+						Turn_buzz(OFF);
+						Enter_pass_remove_alert=FALSE;
+						Emer_flag=FALSE;
+						Write_Page0(Emer_flag,Nbr_ID,OneTouch,password);
+						User_USART2_SendSchar("\nDa tat bao dong!\n");
+						break;
+					}
+				}
+			}
+			OpenDoor();
+		}
+		else {
 		TM_MFRC522_Init();
 			if (TM_MFRC522_Check(ScanedID) == MI_OK){
 				IWDG_ReloadCounter(); //reset lai thoi gian.
 				if(CheckScanedID(ScanedID)) {//right ID
-					if(Door_status!=OPEN) {
+					//if(Door_status!=OPEN) {
 						User_USART2_SendSchar("\nID dung, cho mo cua\n");
 						OpenDoor();
-					}
+					//}
 				}
 				else {
 					Turn_buzz(ON);
 					DelayMs(1000);
 					Turn_buzz(OFF);
-					User_USART2_SendSchar("\nID sai, Nhap lai!");
+					User_USART2_SendSchar("\nID sai!");
 				}
 			}
-		//}
+		}
 		//-----------------------add new member-----------------------
 		if(AddMember_flag) {
 			IWDG_ReloadCounter(); //reset lai thoi gian.
@@ -84,14 +110,14 @@ int main (void) {
 			OneTouchMode_flag=FALSE;
 		}
 		//----------------------Open door use button------------------------
-		if(!Read_status(GPIO_BT,BT1_Pin) && Door_status!=OPEN) {
+		if(!Read_status(GPIO_BT,BT1_Pin)) {
 			IWDG_ReloadCounter(); //reset lai thoi gian.
 			if(OneTouch){
 				OpenDoor();
 			}
 		}
 		//----------------------Open door use USART------------------------
-		if(OpenDoorUSART_flag && Door_status!=OPEN) {
+		if(OpenDoorUSART_flag) {
 			IWDG_ReloadCounter(); //reset lai thoi gian.
 			if(OneTouch){
 				OpenDoor();
@@ -103,13 +129,15 @@ int main (void) {
 			}
 			OpenDoorUSART_flag=FALSE;
 		}
-		//------------------------close door automatically-----------------------
-		if(CheckDoorStatus()==CLOSE && Door_status!=CLOSE) {//able close door
+		//------------------------change door status automatically, prevent alert-----------------------
+		if(CheckDoorStatus()==CLOSE && Door_status!=CLOSE) {//able change
 			IWDG_ReloadCounter(); //reset lai thoi gian.
 			//delay 500ms in case someone open again
 			DelayMs(500);
 			if(CheckDoorStatus()==CLOSE){
-				CloseDoor();
+				Door_status=CLOSE;
+				Turn_led_close(ON);
+				Turn_led_open(OFF);
 			}
 		}
 		IWDG_ReloadCounter(); //reset lai thoi gian.

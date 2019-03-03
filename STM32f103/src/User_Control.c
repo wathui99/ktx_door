@@ -5,8 +5,6 @@ uint16_t Nbr_ID=0; //number of ID
 uint8_t OneTouch=FALSE; //one touch to open door
 uint16_t password[31]={};
 
-volatile uint8_t Enter_pass_remove_alert=FALSE;//flag allow enter password to remove alert
-
 uint8_t Door_status=OPEN;//preveous door's status (open or close)
 
 char TempBuff[50];
@@ -16,6 +14,8 @@ volatile uint16_t buff[100]={};
 volatile uint8_t receive_flag=FALSE;
 
 uint8_t ScanedID[5]={0x00,0x00,0x00,0x00,0x00};
+
+volatile uint8_t Enter_pass_remove_alert=FALSE;
 
 volatile uint8_t AddMember_flag=FALSE;
 
@@ -534,8 +534,7 @@ void Display_ID(uint8_t index) {
 }
 
 void CloseDoor(void) {
-	User_TIM_Handle(SERVO_ANGLE_CLOSE);
-	Door_status=CLOSE;
+	Turn_lock(CLOSE);
 	Turn_led_close(ON);
 	Turn_led_open(OFF);
 	DelayMs(500);
@@ -546,7 +545,7 @@ void CloseDoor(void) {
 	DelayMs(1000);
 }
 void OpenDoor(void){
-	User_TIM_Handle(SERVO_ANGLE_OPEN);
+	Turn_lock(OPEN);
 	Door_status=OPEN;
 	Turn_buzz(ON);
 	DelayMs(300);
@@ -558,7 +557,17 @@ void OpenDoor(void){
 	Turn_led_close(OFF);
 	Turn_led_open(ON);
 	User_USART2_SendSchar("\nOpened door\n");
-	DelayMs(1000);
+	DelayMs(4000);
+	CloseDoor();
+}
+
+void Turn_lock(uint8_t status) {
+	if(status==CLOSE) {
+		SC_bit(GPIOB,LOCK_Pin,SET);
+	}
+	else {
+		SC_bit(GPIOB,LOCK_Pin,CLEAR);
+	}
 }
 
 void Turn_led_close(uint8_t status){
@@ -582,7 +591,7 @@ void Turn_led_open(uint8_t status){
 
 
 void Turn_buzz(uint8_t status){
-	if(status==ON) {
+	if(status==OFF) {
 		SC_bit(GPIOA,BUZZ_Pin,CLEAR);
 	}
 	else {
@@ -622,8 +631,8 @@ uint8_t RequirePassword() {
 }
 
 uint8_t CheckAlert (void) {
-	if(Emer_flag||
-	((Door_status==CLOSE) && (CheckDoorStatus()==OPEN))) { //if door is close but switch indicate open
+	if (Emer_flag) return Emer_flag;
+	if((Door_status==CLOSE) && (CheckDoorStatus()==OPEN)) { //if door is close but switch indicate open
 		uint8_t i=0;
 		for(i=0; i<5; i++) {
 			DelayMs(100);
@@ -645,51 +654,6 @@ uint8_t CheckDoorStatus(void) {
 		return OPEN;
 }
 
-void Alert(void) {
-	Run_alert:
-	while (Emer_flag && !Enter_pass_remove_alert) {
-		IWDG_ReloadCounter(); //reset lai thoi gian.
-		TM_MFRC522_Init();
-		Updata_Data_From_PAGE0();
-		User_USART2_SendSchar("\nBAO DONG!\n");
-		if (TM_MFRC522_Check(ScanedID) == MI_OK){
-			if(CheckScanedID(ScanedID)){
-				Turn_buzz(OFF);
-				Enter_pass_remove_alert=FALSE;
-				Emer_flag=FALSE;
-				Write_Page0(Emer_flag,Nbr_ID,OneTouch,password);
-				User_USART2_SendSchar("\nDa tat bao dong!\n");
-				if(CheckDoorStatus()==OPEN && Door_status==CLOSE) {
-					OpenDoor();
-				}
-				return;
-			}
-		}
-		Turn_buzz(ON);
-		DelayMs(500);
-		Turn_buzz(OFF);
-		DelayMs(500);
-		if(!Read_status(GPIO_BT,BT2_Pin) && OneTouch)
-			Enter_pass_remove_alert=TRUE;
-	}
-	if(Enter_pass_remove_alert) {
-		if(RequirePassword()) {
-			Turn_buzz(OFF);
-			Enter_pass_remove_alert=FALSE;
-			Emer_flag=FALSE;
-			Write_Page0(Emer_flag,Nbr_ID,OneTouch,password);
-			User_USART2_SendSchar("\nDa tat bao dong!\n");
-			if(CheckDoorStatus()==OPEN && Door_status==CLOSE) {
-				OpenDoor();
-			}
-		}
-		else {
-			Enter_pass_remove_alert=FALSE;
-			goto Run_alert;
-		}
-	}
-}
-
 uint8_t CheckScanedID(uint8_t* IDCheck) {
 	if(Search_ID(IDCheck)==ID_NOT_FOUND)
 		return FALSE;
@@ -703,7 +667,8 @@ void DisplayMenu(void) {
 	User_USART2_SendSchar("a: Them thanh vien\n");
 	User_USART2_SendSchar("r: Loai bo thanh vien\n");
 	User_USART2_SendSchar("p: Doi password\n");
-	User_USART2_SendSchar("o: One touch mode\n");
+	User_USART2_SendSchar("o: Che do mot cham\n");
+	User_USART2_SendSchar("x: Tat bao dong\n");
 }
 
 void Add_Mem_Procedure(void) {
@@ -799,7 +764,7 @@ void ChangePass(void) {
 }
 
 void TurnOneTouchMode(void) {
-	User_USART2_SendSchar("\nTurn one touch mode:\n");
+	User_USART2_SendSchar("\nBat che do mot cham:\n");
 	if(RequirePassword()) {
 		IWDG_ReloadCounter();
 		User_USART2_SendSchar("\nON: de bat\nOFF: de tat\n");
@@ -835,38 +800,36 @@ void USART2_IRQHandler(void){
 		buff[buff_pos++]=User_USART2_ReceiveChar();
 	}
 	
-	if(USART_GetITStatus(User_USART2, USART_IT_RXNE) != RESET && !Emer_flag && !Enter_pass_remove_alert && !receive_flag) {
-		switch(User_USART2_ReceiveChar()) {
-			case 'm': //display option menu
-				DisplayMenu();
-				break;
-			
-			case 'a': //add new member
-				AddMember_flag=TRUE;
-				break;
-			
-			case 'r': //remove mem
-				RemoveMember_flag=TRUE;
-				break;
-			
-			case 'p': //change new pass word
-				ChangePassword_flag=TRUE;
-				break;
-			
-			case 'o': //change one touch mode
-				OneTouchMode_flag=TRUE;
-				break;
-			case 'd': //opendoor from usart
-				OpenDoorUSART_flag=TRUE;
-				break;
-			
+	if(USART_GetITStatus(User_USART2, USART_IT_RXNE) != RESET && !receive_flag) {
+		if (!Enter_pass_remove_alert && !Emer_flag) {
+			switch(User_USART2_ReceiveChar()) {
+				case 'm': //display option menu
+					DisplayMenu();
+					break;
+				
+				case 'a': //add new member
+					AddMember_flag=TRUE;
+					break;
+				
+				case 'r': //remove mem
+					RemoveMember_flag=TRUE;
+					break;
+				
+				case 'p': //change new pass word
+					ChangePassword_flag=TRUE;
+					break;
+				
+				case 'o': //change one touch mode
+					OneTouchMode_flag=TRUE;
+					break;
+				case 'd': //opendoor from usart
+					OpenDoorUSART_flag=TRUE;
+					break;
+			}
+		} else {
+			if (User_USART2_ReceiveChar()=='x') {
+				Enter_pass_remove_alert=TRUE;
+			}
 		}
 	}
-	//if alert occure, want to shutdown it
-	if(USART_GetITStatus(User_USART2, USART_IT_RXNE) != RESET && Emer_flag && !Enter_pass_remove_alert && !receive_flag) {
-		if(User_USART2_ReceiveChar()=='x') {
-			Enter_pass_remove_alert=TRUE;
-		}
-	}
-	
 }

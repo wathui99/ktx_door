@@ -13,7 +13,6 @@ Button 2 : tat bao dong
 #include "User_USART2.h"
 #include "stm32f10x.h"
 #include "delay.h"
-#include "User_TIM.h"
 #include "tm_stm32f10x_mfrc522.h"
 #include "User_FLASH.h"
 #include "User_GPIO.h"
@@ -26,10 +25,6 @@ Button 2 : tat bao dong
 
 /*==================================*/
 #define ID_NOT_FOUND -1
-
-//angle for servo close or open door
-#define SERVO_ANGLE_CLOSE 20
-#define SERVO_ANGLE_OPEN	-75
 
 //status of door (open or close)
 #define CLOSE 0
@@ -179,6 +174,11 @@ close and open door
 */
 void CloseDoor(void);
 void OpenDoor(void);
+
+/*----------------------------
+*	Turn OPEN or CLOSE LOCK close
+*/
+void Turn_lock(uint8_t status);
 
 /*----------------------------
 *	Turn ON or OFF LED close
