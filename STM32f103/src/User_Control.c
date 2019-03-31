@@ -535,17 +535,20 @@ void Display_ID(uint8_t index) {
 
 void CloseDoor(void) {
 	Turn_lock(CLOSE);
+	/*
 	Turn_led_close(ON);
 	Turn_led_open(OFF);
 	DelayMs(500);
 	Turn_buzz(ON);
 	DelayMs(500);
 	Turn_buzz(OFF);
+	*/
 	User_USART2_SendSchar("\nClosed door\n");
-	DelayMs(1000);
+	DelayMs(3000);
 }
 void OpenDoor(void){
 	Turn_lock(OPEN);
+	/*
 	Door_status=OPEN;
 	Turn_buzz(ON);
 	DelayMs(300);
@@ -556,6 +559,7 @@ void OpenDoor(void){
 	Turn_buzz(OFF);
 	Turn_led_close(OFF);
 	Turn_led_open(ON);
+	*/
 	User_USART2_SendSchar("\nOpened door\n");
 	DelayMs(4000);
 	CloseDoor();

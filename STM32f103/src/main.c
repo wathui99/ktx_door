@@ -15,21 +15,25 @@ int main (void) {
 	User_USART2_Init(9600);
 	User_GPIO_Init();
 	
+	/*
 	Turn_buzz(OFF);
 	Turn_led_close(OFF);
 	Turn_led_open(OFF);
-	
+	*/
 	
 	Turn_lock(CLOSE);
-	Door_status=CLOSE;
-	Turn_led_close(ON);
+	//Door_status=CLOSE;
+	//Turn_led_close(ON);
 	
 	User_USART2_SendSchar("restart!\n");
+	
+	//Write_Page0(0,0,1,ConvertCharToUint16("159753"));
 	
 	Updata_Data_From_PAGE0();
 
 	/*---------------------loop while---------------------*/
 	while (1) {
+		/*
 		//---------------------ALERT-----------------------
 		if(CheckAlert()) {//if alert occure
 			while(Emer_flag) {
@@ -69,7 +73,8 @@ int main (void) {
 			OpenDoor();
 		}
 		else {
-		TM_MFRC522_Init();
+		*/
+		//TM_MFRC522_Init();
 			if (TM_MFRC522_Check(ScanedID) == MI_OK){
 				IWDG_ReloadCounter(); //reset lai thoi gian.
 				if(CheckScanedID(ScanedID)) {//right ID
@@ -85,7 +90,7 @@ int main (void) {
 					User_USART2_SendSchar("\nID sai!");
 				}
 			}
-		}
+		//}
 		//-----------------------add new member-----------------------
 		if(AddMember_flag) {
 			IWDG_ReloadCounter(); //reset lai thoi gian.
@@ -141,6 +146,7 @@ int main (void) {
 			}
 		}
 		IWDG_ReloadCounter(); //reset lai thoi gian.
+		DelayMs(1500);
 		//--------------------end loop-------------------
 	}
 }
